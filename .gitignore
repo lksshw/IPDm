@@ -1,8 +1,0 @@
-*DS_Store
-*_.py
-__pycache__/
-logs/CDMLogs/
-logs/TfTLogs/
-logs/twoActLogs/
-
-
