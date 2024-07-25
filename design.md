@@ -17,12 +17,12 @@
    - memory length
    - normalized score (from all time steps)
 
-2. BoardState: creates a game board tree and subsequently keeps track of agents and superagents in each round. Tracking involves the following:
+2. BoardState: creates a game board tree and subsequently keeps track of agents and superagents in each round. 
 
-   - the main idea is that of a tree. Each node of this tree represents an agent with three properties:
-    * A set of neighbors
-    * A set of parents
-    * A set of children
+   - The main data structure is a tree. Each node of this tree represents an agent with three properties:
+        * a set of neighbors
+        * a set of parents
+        * a set of children
 
     - During a merge, we update the tree by creating a new node, setting its parents (and consequently setting its parents's "child" attribute) 
     - During a split, we delete a node, and update its parents' child node. 
