@@ -39,51 +39,51 @@ else:
 #get initial turn order
 agents = bs.getTurnOrder()
 
-#while (it<iter_limit):
-#    # pick an agent at random
-#    my_idx = rng.choice(agents)
-#    me = bs.tree[my_idx]
-#    my_agent = me.agent
+while (it<iter_limit):
+    # pick an agent at random
+    my_idx = rng.choice(agents)
+    me = bs.tree[my_idx]
+    my_agent = me.agent
 
-#    # opponent is a neighbor (chosen at random)
-#    try:
-#        #error handling when neighbor list is empty (the entire grid is a single agent)
-#        opp_idx = rng.choice(list(me.neighbors))
+    # opponent is a neighbor (chosen at random)
+    try:
+        #error handling when neighbor list is empty (the entire grid is a single agent)
+        opp_idx = rng.choice(list(me.neighbors))
 
-#    except ValueError:
-#        raise Exception("The grid is a single agent; terminating...")
+    except ValueError:
+        raise Exception("The grid is a single agent; terminating...")
 
-#    opp = bs.tree[opp_idx]
-#    opp_agent = opp.agent
+    opp = bs.tree[opp_idx]
+    opp_agent = opp.agent
 
-#   # in case of split, store subagent indexes; initialization here
-#    deletedAgent_info = {}
+   # in case of split, store subagent indexes; initialization here
+    deletedAgent_info = {}
 
-#    hf.fight(my_agent, opp_agent, hp)
+    hf.fight(my_agent, opp_agent, hp)
 
-#    #check to mutate my policy
-#    if (bs.rng.random() <=hp.policy_mutation_rate):
-#        if (hf.worse_than_neighbor(me, bs)):
-#            my_agent.policy = hf.get_best_neighborPolicy(me, bs)
+    #check to mutate my policy
+    if (bs.rng.random() <=hp.policy_mutation_rate):
+        if (hf.worse_than_neighbor(me, bs)):
+            my_agent.policy = hf.get_best_neighborPolicy(me, bs)
 
-#    #update turnOrder
-#    agents = bs.getTurnOrder()
+    #update turnOrder
+    agents = bs.getTurnOrder()
 
-#    #make sure all neighbors are aware of superagents/splits (redundant here)
-#    # hf.update_neighbors(agents, bs)
+    #make sure all neighbors are aware of superagents/splits (redundant here)
+    # hf.update_neighbors(agents, bs)
 
-#    #log: scores, and size
-#    lw.gather_data(agents, bs)
-#    #log tft data
-#    lw.gatherTftData(agents, bs)
+    #log: scores, and size
+    lw.gather_data(agents, bs)
+    #log tft data
+    lw.gatherTftData(agents, bs)
 
-#    print(f"{it} | {my_idx} vs {opp_idx} | agent_scr-> {my_agent.get_score():.2f}, opp_scr-> {opp_agent.get_score():.2f} | tft_count: {len(lw.tft_agents[-1])} | oth_count: {len(lw.other_agents[-1])}")
-#    it += 1
+    print(f"{it} | {my_idx} vs {opp_idx} | agent_scr-> {my_agent.get_score():.2f}, opp_scr-> {opp_agent.get_score():.2f} | tft_count: {len(lw.tft_agents[-1])} | oth_count: {len(lw.other_agents[-1])}")
+    it += 1
 
-#    #save data once every n games
-#    if(it % hp.save_every == 0):
-#        print("saving ...")
-#        lw.save_data(bs, it)
+    #save data once every n games
+    if(it % hp.save_every == 0):
+        print("saving ...")
+        lw.save_data(bs, it)
 
 #lw.plot_clusterData(1000)
 lw.plot_tftData()

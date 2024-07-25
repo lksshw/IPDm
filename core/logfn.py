@@ -261,16 +261,17 @@ class LogWriter:
 
         ax1.plot(tft_info, color = 'red', label = 'tft agents')
         ax1.plot(oth_info, color = 'blue', label = 'other agents')
-        ax1.set_xlabel("timestep")
-        ax1.set_ylabel("frequency")
+        ax1.set_xlabel("N. Games")
+        ax1.set_ylabel("Proportion of Pop.")
 
         ax2.plot(tft_score_info, color = 'red', label = 'tft score')
         ax2.plot(oth_score_info, color = 'blue', label = 'oth score')
-        ax2.set_xlabel("timestep")
-        ax2.set_ylabel("avg. score")
+        ax2.set_xlabel("N. Games")
+        ax2.set_ylabel("Max. score")
 
         ax1.legend()
         ax2.legend()
+        fig.tight_layout()
         plt.savefig(os.path.join(self.figures_path, "tft.png"), dpi = 300)
         plt.show()
 
