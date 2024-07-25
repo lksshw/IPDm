@@ -1,10 +1,10 @@
 ### File organization
 
-Core/ (dir): contains common modules for every simulation
+* Core/ (dir): contains common modules (see design below)
 
-cdm.py: simulation of cooperate-defect-merge IPD with varying memory length ([0:5])
-twoAct.py: simulation of classic IPD with varying memory length ([0:5])
-tft.py: simulation of classic IPD with a fixed memory length of 1
+* cdm.py: simulation of cooperate-defect-merge IPD with varying memory length ([0:5])
+* twoAct.py: simulation of classic IPD with varying memory length ([0:5])
+* tft.py: simulation of classic IPD with a fixed memory length of 1
 
 
 ### Modules (interface):
