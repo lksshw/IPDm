@@ -42,7 +42,7 @@ class Agent:
         # if(len(self.memory)):
         #     return self.avg_score/len(self.memory)
         # else:
-            return self.avg_score
+        return self.avg_score
 
     #destructor
     def __del__(self):
