@@ -39,9 +39,9 @@ class Agent:
         self.avg_score += score #make sure you divide by len(memory) when you use it later
 
     def get_score(self) ->None:
-        if(len(self.memory)):
-            return self.avg_score/len(self.memory)
-        else:
+        # if(len(self.memory)):
+        #     return self.avg_score/len(self.memory)
+        # else:
             return self.avg_score
 
     #destructor
