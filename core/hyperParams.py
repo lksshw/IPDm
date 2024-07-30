@@ -4,10 +4,10 @@ class HP:
         self.gamma = 0.95
         self.epsilon = 0.05
 
-        self.board_size = 20
+        self.board_size = 10
 
         #iter max
-        self.max_iter = 1e3
+        self.max_iter = int(100)
 
         #threshold score of superAgent below which it splits
         self.threshold = 5.0
@@ -16,7 +16,10 @@ class HP:
         self.policy_mutation_rate = 0.5
 
         #save frequency
-        self.save_every = 1000
+        self.save_every = 10
+
+        #n_runs
+        self.n_runs = 5
 
         self.payTable = {
                 "CC": 8.0,
@@ -34,6 +37,7 @@ class HP3Act(HP):
     def __init__(self):
         super().__init__()
         self.n_actions = 3
+        self.mode = "range_memory"
         self.max_agentMemory = 5
         self.max_stateLen = self.max_agentMemory*2 #state will a combination of my memory+opponent memory
 
@@ -41,13 +45,14 @@ class HP2Act(HP):
     def __init__(self):
         super().__init__()
         self.n_actions = 2
+        self.mode = "range_memory"
         self.max_agentMemory = 5
         self.max_stateLen = self.max_agentMemory*2 #state will a combination of my memory+opponent memory
 
 class HPTfT(HP):
     def __init__(self):
         super().__init__()
+        self.mode = "fixed" #memory setting (see _init_tree in env for context)
         self.n_actions = 2
         self.max_agentMemory = 1
         self.max_stateLen = self.max_agentMemory*2 #state will a combination of my memory+opponent memory
-        self.max_iter = 100e3

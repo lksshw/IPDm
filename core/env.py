@@ -36,10 +36,12 @@ class BoardState:
             #get its neighbors
             neighbors = self.getNeighbors(i)
             #set a random memory length
-            if (self.hp.max_agentMemory == 1):
+            if (self.hp.mode == "range_memory"):
+                mem_len = self.rng.choice(self.hp.max_agentMemory+1) #a memory of 0 involves picking random actions
+            elif (self.hp.mode == "fixed"):
                 mem_len = self.hp.max_agentMemory
             else:
-                mem_len = self.rng.choice(self.hp.max_agentMemory+1) # mem=0 serves as control (it returns a random action)
+                raise Exception("Memory init fault")
             #push to tree
             tree[i] = Tree(agent=Agent(self.rng, self.hp, i, mem_len), parents=set([]), children=set([]), neighbors= neighbors)
 

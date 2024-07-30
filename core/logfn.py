@@ -16,69 +16,95 @@ class LogWriter:
         self.figures_path = os.path.join(self.save_path, "figures")
         os.makedirs(self.figures_path, exist_ok=True)
 
-        #log data
         self.hp = hyperParams
-        self.clusterSizeData = []
-        self.cooperability = []
-        self.cluster_score_map = {k: [] for k in range(1, self.hp.board_size**2+1)} #avg score for each cluster_size
-        self.memory_sizes = []
-        self.memory_score_map = {k: [] for k in range(0, self.hp.max_agentMemory+1)} #max score for each memory_size
+        self.init_data()
+
+
+    def init_data(self):
+        #log data (each ts)
+        self.clusterSizeData = {k: 0.0 for k in range(self.hp.max_iter)} #store avg cluster size at each ts
+        self.cooperability = {k: {"avg_U": 0.0, "avg_M": 0.0} for k in range(self.hp.max_iter)} #store at each ts
+
+        self.memorySizeData = {k: 0.0 for k in range(self.hp.max_iter)} #store avg memory size at each ts
+        self.lastMemScores = {k: [] for k in range(self.hp.max_agentMemory+1)}
+
+        #unicellular and multicellular fitness
+        self.fitness_scores = {k: {"avg_U": 0.0, "avg_M": 0.0} for k in range(self.hp.max_iter)} #store at each ts
 
         #tft data log
-        self.tft_agents = []
-        self.other_agents = []
-
         self.tft_agents_score = []
         self.other_agents_score = []
 
-    def get_cooperability(self, agent_list, bs):
-        coop = 0
+    def record_cooperability(self, agent_list, bs, curr_iter):
+        uCoop = 0 #unicellular cooperability
+        mCoop = 0 #multicellular cooperability
         for ag_idx in agent_list:
             me = bs.tree[ag_idx]
+            cnt = len(hf.get_root(ag_idx, bs))
             try:
                 if(me.agent.memory[-1] == "C"):
-                    coop += 1
+                    if (cnt >1): #multicellular
+                        mCoop += 1
+                    else:
+                        uCoop += 1
             except IndexError:
                 pass
-        return coop/len(agent_list) #normalize by the number of agents
+        self.cooperability[curr_iter]["avg_U"] = uCoop/len(agent_list)
+        self.cooperability[curr_iter]["avg_M"] = mCoop/len(agent_list)
 
-    def get_clusterInfo(self, agent_list, bs):
+    def record_fitness(self, agent_list, bs, curr_iter):
+        #get scores of unicellular and multicelluar clusters
+        uCell_scores = []
+        mCell_scores = []
+        for ag_idx in agent_list:
+            cnt = len(hf.get_root(ag_idx, bs)) #cluster size
+            score = bs.tree[ag_idx].agent.get_score()
+            if (cnt >1): #multicellular
+                mCell_scores.append(score)
+            else:
+                uCell_scores.append(score)
+        self.fitness_scores[curr_iter]["avg_U"] = np.mean(uCell_scores)
+        self.fitness_scores[curr_iter]["avg_M"] = np.mean(mCell_scores)
+
+    def record_clusterInfo(self, agent_list, bs, curr_iter):
         #get the cluster size of each agent
         #get max score for each cluster
         cluster_size = []
         for ag_idx in agent_list:
             cnt = len(hf.get_root(ag_idx, bs))
             curr_score = bs.tree[ag_idx].agent.get_score()
-            self.cluster_score_map[cnt].append(curr_score) #store scores of a particular cluster size
+            # self.cluster_score_map[cnt].append(curr_score) #store scores of a particular cluster size
             cluster_size.append(cnt)
-        return cluster_size
+        unique_sizes = set(cluster_size)
+        self.clusterSizeData[curr_iter] = np.mean(list(unique_sizes))
 
-    def get_memoryInfo(self, agent_list, bs):
+    def record_memoryInfo(self, agent_list, bs, curr_iter):
         #get a distribution of memory_sizes
-        mem_list = []
+        mem_sizes = []
         for ag_idx in agent_list:
             memLen = bs.tree[ag_idx].agent.memory_length
-            mem_list.append(memLen)
-            curr_score = bs.tree[ag_idx].agent.get_score()
-            self.memory_score_map[memLen].append(curr_score)
-        return mem_list
+            mem_sizes.append(memLen)
+        unique_sizes = set(mem_sizes)
+        self.memorySizeData[curr_iter] = np.mean(list(unique_sizes)) #avg_mem size at each ts
 
-    def gather_data(self, agent_list, bs):
-        cluster_sizes = self.get_clusterInfo(agent_list, bs)
-        coop_count = self.get_cooperability(agent_list, bs)
+    def record_lastMem(self, agent_list, bs):
+        for ag_idx in agent_list:
+            memLen = bs.tree[ag_idx].agent.memory_length
+            score = bs.tree[ag_idx].agent.get_score()
+            self.lastMemScores[memLen].append(score)
 
-        self.clusterSizeData.append(cluster_sizes)
-        self.cooperability.append(coop_count)
-        #cluster score map exists as well
+    def gather_data(self, agent_list, bs, curr_iter):
+        self.record_clusterInfo(agent_list, bs, curr_iter)
+        self.record_cooperability(agent_list, bs, curr_iter)
+        self.record_memoryInfo(agent_list, bs, curr_iter)
+        if (curr_iter == self.hp.max_iter-1):
+            self.record_lastMem(agent_list, bs)
 
-        memData = self.get_memoryInfo(agent_list, bs)
-        self.memory_sizes.append(memData)
-        #memory score map exists as well
+        #fitness data
+        self.record_fitness(agent_list, bs, curr_iter)
 
     def gatherTftData(self, agent_list, bs):
         #check the action each agent would play against its opponent, verify if it is equal to the opponent's last action
-        tft_agents = []
-        other_agents = []
 
         tft_agents_score = []
         other_agents_score = []
@@ -95,15 +121,10 @@ class LogWriter:
                 tft_score += hf.tft_satisfied(my_action, opp.agent.memory)
 
             if (tft_score == len(me.neighbors)): #if i'm tft with all my neighbors
-                tft_agents.append(ag_idx)
                 tft_agents_score.append(me.agent.get_score())
 
             else:
-                other_agents.append(ag_idx)
                 other_agents_score.append(opp.agent.get_score())
-
-        self.tft_agents.append(tft_agents)
-        self.other_agents.append(other_agents)
 
         self.tft_agents_score.append(tft_agents_score)
         self.other_agents_score.append(other_agents_score)
@@ -117,57 +138,59 @@ class LogWriter:
             data = pickle.load(inp)
         return data
 
-    def save_data(self, bs, iter):
+    def save_data(self, bs, run_num, iter):
         #cluster
-        self.save_file(os.path.join(self.checkpoint_path, "clustersizeList-vs-time.pkl"), self.clusterSizeData)
-        self.save_file(os.path.join(self.checkpoint_path, "cooperability-vs-time_merge.pkl"), self.cooperability)
-        self.save_file(os.path.join(self.checkpoint_path, "cluster_score_map.pkl"), self.cluster_score_map)
+        self.save_file(os.path.join(self.checkpoint_path, f"clustersizeList-vs-time-run{run_num}.pkl"), self.clusterSizeData)
+        self.save_file(os.path.join(self.checkpoint_path, f"cooperability-vs-time_merge-run{run_num}.pkl"), self.cooperability)
 
         #memory
-        self.save_file(os.path.join(self.checkpoint_path, "memorySizeList-vs-time.pkl"), self.memory_sizes)
-        self.save_file(os.path.join(self.checkpoint_path, "memory_score_map.pkl"), self.memory_score_map)
+        self.save_file(os.path.join(self.checkpoint_path, f"memorySizeList-vs-time-run{run_num}.pkl"), self.memorySizeData)
+        self.save_file(os.path.join(self.checkpoint_path, f"lastMem-run{run_num}.pkl"), self.lastMemScores)
 
         #save boardstate
-        self.save_file(os.path.join(self.checkpoint_path, "boardstate.pkl"), bs)
+        self.save_file(os.path.join(self.checkpoint_path, f"boardstate-run{run_num}.pkl"), bs)
 
         #save tft data
-        self.save_file(os.path.join(self.checkpoint_path, "tft_agents.pkl"), self.tft_agents)
-        self.save_file(os.path.join(self.checkpoint_path, "other_agents.pkl"), self.other_agents)
+        # self.save_file(os.path.join(self.checkpoint_path, "tft_agents.pkl"), self.tft_agents)
+        # self.save_file(os.path.join(self.checkpoint_path, "other_agents.pkl"), self.other_agents)
+        self.save_file(os.path.join(self.checkpoint_path, f"fitness-run{run_num}.pkl"), self.fitness_scores)
 
-        self.save_file(os.path.join(self.checkpoint_path, "tft_agents_score.pkl"), self.tft_agents_score)
-        self.save_file(os.path.join(self.checkpoint_path, "other_agents_score.pkl"), self.other_agents_score)
+        self.save_file(os.path.join(self.checkpoint_path, f"tft_agents_score-run{run_num}.pkl"), self.tft_agents_score)
+        self.save_file(os.path.join(self.checkpoint_path, f"other_agents_score-run{run_num}.pkl"), self.other_agents_score)
 
         #save metadata
-        meta_data = {"iter_num": iter}
-        self.save_file(os.path.join(self.checkpoint_path, "meta_data.pkl"), meta_data)
+        meta_data = {"run_num": run_num, "iter_num": iter}
+        self.save_file(os.path.join(self.checkpoint_path, f"meta_data-run{run_num}.pkl"), meta_data)
 
-    def load_checkpoint(self):
+    def load_checkpoint(self, run_num):
         #meta_data
         try:
-            meta_data = self.load_file(os.path.join(self.checkpoint_path, "meta_data.pkl"))
+            meta_data = self.load_file(os.path.join(self.checkpoint_path, f"meta_data-run{run_num}.pkl"))
         except:
             return -1, -1
 
         iter_num = meta_data["iter_num"]
 
         #boardstate
-        bs = self.load_file(os.path.join(self.checkpoint_path, "boardstate.pkl"))
+        bs = self.load_file(os.path.join(self.checkpoint_path, f"boardstate-run{run_num}.pkl"))
 
         #cluster data
-        self.clusterSizeData = self.load_file(os.path.join(self.checkpoint_path, "clustersizeList-vs-time.pkl"))
-        self.cooperability = self.load_file(os.path.join(self.checkpoint_path, "cooperability-vs-time_merge.pkl"))
-        self.cluster_score_map = self.load_file(os.path.join(self.checkpoint_path, "cluster_score_map.pkl"))
+        self.clusterSizeData = self.load_file(os.path.join(self.checkpoint_path, f"clustersizeList-vs-time-run{run_num}.pkl"))
+        self.cooperability = self.load_file(os.path.join(self.checkpoint_path, f"cooperability-vs-time_merge-run{run_num}.pkl"))
 
         #memory data
-        self.memory_sizes = self.load_file(os.path.join(self.checkpoint_path, "memorySizeList-vs-time.pkl"))
-        self.memory_score_map = self.load_file(os.path.join(self.checkpoint_path, "memory_score_map.pkl"))
+        self.memorySizeData = self.load_file(os.path.join(self.checkpoint_path, f"memorySizeList-vs-time-run{run_num}.pkl"))
+        self.lastMemScores = self.load_file(os.path.join(self.checkpoint_path, f"lastMem-run{run_num}.pkl"))
+
+        #fitness
+        self.fitness_scores = self.load_file(os.path.join(self.checkpoint_path, f"fitness-run{run_num}.pkl"))
 
         #tft data
-        self.tft_agents = self.load_file(os.path.join(self.checkpoint_path, "tft_agents.pkl"))
-        self.other_agents = self.load_file(os.path.join(self.checkpoint_path, "other_agents.pkl"))
+        # self.tft_agents = self.load_file(os.path.join(self.checkpoint_path, "tft_agents.pkl"))
+        # self.other_agents = self.load_file(os.path.join(self.checkpoint_path, "other_agents.pkl"))
 
-        self.tft_agents_score = self.load_file(os.path.join(self.checkpoint_path, "tft_agents_score.pkl"))
-        self.other_agents_score = self.load_file(os.path.join(self.checkpoint_path, "other_agents_score.pkl"))
+        self.tft_agents_score = self.load_file(os.path.join(self.checkpoint_path, f"tft_agents_score-run{run_num}.pkl"))
+        self.other_agents_score = self.load_file(os.path.join(self.checkpoint_path, f"other_agents_score-run{run_num}.pkl"))
 
         return iter_num, bs
 
@@ -246,18 +269,23 @@ class LogWriter:
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
 
         #load data
-        tft_dat = self.load_file(os.path.join(self.checkpoint_path, "tft_agents.pkl"))
-        oth_dat = self.load_file(os.path.join(self.checkpoint_path, "other_agents.pkl"))
+        # tft_dat = self.load_file(os.path.join(self.checkpoint_path, "tft_agents.pkl"))
+        # oth_dat = self.load_file(os.path.join(self.checkpoint_path, "other_agents.pkl"))
 
         tft_scr_dat = self.load_file(os.path.join(self.checkpoint_path, "tft_agents_score.pkl"))
         oth_scr_dat = self.load_file(os.path.join(self.checkpoint_path, "other_agents_score.pkl"))
 
         #plot
-        tft_info = [len(l)/(len(l)+len(oth_dat[idx])) for idx, l in enumerate(tft_dat)] #vs timestep
-        oth_info = [len(j)/(len(j)+len(tft_dat[idx])) for idx, j in enumerate(oth_dat)] #vs timestep
+        tft_info = [len(l)/(len(l)+len(oth_scr_dat[idx])) for idx, l in enumerate(tft_scr_dat)] #vs timestep
+        oth_info = [len(j)/(len(j)+len(tft_scr_dat[idx])) for idx, j in enumerate(oth_scr_dat)] #vs timestep
 
-        tft_score_info = [np.max(l) if len(l) else 0.0 for l in tft_scr_dat]
-        oth_score_info = [np.max(k) if len(k) else 0.0 for k in oth_scr_dat]
+        tft_score_info = [np.sum(l) if len(l) else 0.0 for l in tft_scr_dat]
+        # tft_scoreMax_info = [np.max(l) if len(l) else 0.0 for l in tft_scr_dat]
+        # tft_scoreMin_info = [np.min(l) if len(l) else 0.0 for l in tft_scr_dat]
+
+        oth_score_info = [np.sum(k) if len(k) else 0.0 for k in oth_scr_dat]
+        # oth_scoreMax_info = [np.max(k) if len(k) else 0.0 for k in oth_scr_dat]
+        # oth_scoreMin_info = [np.min(k) if len(k) else 0.0 for k in oth_scr_dat]
 
         ax1.plot(tft_info, color = 'red', label = 'tft agents')
         ax1.plot(oth_info, color = 'blue', label = 'other agents')
@@ -267,7 +295,7 @@ class LogWriter:
         ax2.plot(tft_score_info, color = 'red', label = 'tft score')
         ax2.plot(oth_score_info, color = 'blue', label = 'oth score')
         ax2.set_xlabel("N. Games")
-        ax2.set_ylabel("Max. score")
+        ax2.set_ylabel("Population Score")
 
         ax1.legend()
         ax2.legend()

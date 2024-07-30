@@ -3,96 +3,101 @@
 import os
 import gc
 import numpy as np
+import multiprocessing
 import core.hyperParams as hyperParams
 from core.env import BoardState
 import core.helperfunctions as hf
 from core.logfn import LogWriter
 
 rng = np.random.default_rng(1234)
-hp = hyperParams.HP3Act()
-board_size = hp.board_size
 
-#logger
-save_path = os.getcwd()
-save_path = os.path.join(save_path, "logs/CDMLogs")
-lw = LogWriter(save_path, hp)
+def run(run_count):
+    hp = hyperParams.HP3Act()
+    board_size = hp.board_size
 
-#max iteration
-max_iter = hp.max_iter
+    #logger
+    save_path = os.getcwd()
+    save_path = os.path.join(save_path, "logs/CDMLogs")
+    lw = LogWriter(save_path, hp)
 
-##check if a checkpoint exists
-#iter_num, bs_new = lw.load_checkpoint()
-#if iter_num == -1:
-#    print("checkpoint not found..")
-#    it = 0
-#    bs = BoardState(rng, hp, board_size)
+    #max iteration
+    max_iter = hp.max_iter
 
-#else:
-#    print(f"checkpoint found at iter: {iter_num}")
-#    print("resuming...")
-#    it = iter_num
-#    bs = bs_new
+    #check if a checkpoint exists
+    iter_num, bs_new = lw.load_checkpoint(run_count)
+    if iter_num == -1:
+        print("checkpoint not found..")
+        it = 0
+        bs = BoardState(rng, hp, board_size)
 
-##get initial turn order
-#agents = bs.getTurnOrder()
+    else:
+        print(f"checkpoint found!")
+        print(f"resuming! Run: {run_count} | iter: {iter_num}")
+        it = iter_num
+        bs = bs_new
 
-#while (it<max_iter):
+    #get initial turn order
+    agents = bs.getTurnOrder()
 
-#    #logs
-#    lw.gather_data(agents, bs)
+    while (it<max_iter):
 
-#    # pick an agent at random
-#    my_idx = rng.choice(agents)
-#    me = bs.tree[my_idx]
-#    my_agent = me.agent
+        #logs
+        lw.gather_data(agents, bs, it)
 
-#    # opponent is a neighbor (chosen at random)
-#    try:
-#        #error handling when neighbor list is empty (the entire grid is a single agent)
-#        opp_idx = rng.choice(list(me.neighbors))
+        # pick an agent at random
+        my_idx = rng.choice(agents)
+        me = bs.tree[my_idx]
+        my_agent = me.agent
 
-#    except ValueError:
-#        print("The grid is a single agent; terminating...")
-#        break
+        # opponent is a neighbor (chosen at random)
+        try:
+            #error handling when neighbor list is empty (the entire grid is a single agent)
+            opp_idx = rng.choice(list(me.neighbors))
 
-#    opp = bs.tree[opp_idx]
-#    opp_agent = opp.agent
+        except ValueError:
+            print("The grid is a single agent; terminating...")
+            break
 
-#   # in case of split, store subagent indexes
-#    deletedAgent_info = {}
+        opp = bs.tree[opp_idx]
+        opp_agent = opp.agent
 
-#    #gets actions from states, updates memories, scores, and policies
-#    #these agents are updated in-place in the bs
-#    hf.fight(my_agent, opp_agent, hp)
+       # in case of split, store subagent indexes
+        deletedAgent_info = {}
 
-#    #check to mutate my policy
-#    if (bs.rng.random() <=hp.policy_mutation_rate):
-#        if (hf.worse_than_neighbor(me, bs)):
-#            my_agent.policy = hf.get_best_neighborPolicy(me, bs)
+        #gets actions from states, updates memories, scores, and policies
+        #these agents are updated in-place in the bs
+        hf.fight(my_agent, opp_agent, hp)
 
-#    #otherwise, merge/split
-#    if (my_agent.memory[-1] == "M" and opp_agent.memory[-1] == "M"):
-#        print(f"Merge between: agent-{my_idx}, opp-{opp_idx}")
-#        hf.merge(me, opp, bs)
+        #check to mutate my policy
+        if (bs.rng.random() <=hp.policy_mutation_rate):
+            if (hf.worse_than_neighbor(me, bs)):
+                my_agent.policy = hf.get_best_neighborPolicy(me, bs)
 
-#    elif (hf.is_superAgent(me) and me.agent.get_score() <hp.threshold):
-#        print(f"Splitting... agent-{my_idx}")
-#        deletedAgent_info = hf.split(me, bs)
-#        print(deletedAgent_info)
+        #otherwise, merge/split
+        if (my_agent.memory[-1] == "M" and opp_agent.memory[-1] == "M"):
+            print(f"Merge between: agent-{my_idx}, opp-{opp_idx}")
+            hf.merge(me, opp, bs)
 
-#    #update turnOrder
-#    agents = bs.getTurnOrder()
+        elif (hf.is_superAgent(me) and me.agent.get_score() <hp.threshold):
+            print(f"Splitting... agent-{my_idx}")
+            deletedAgent_info = hf.split(me, bs)
+            print(deletedAgent_info)
 
-#    #warning: make sure all neighbors are aware of superagents
-#    hf.update_neighbors(agents, bs)
+        #update turnOrder
+        agents = bs.getTurnOrder()
 
-#    print(f"{it} | Game: agent-{my_idx} vs {opp_idx} | Scores: agent-> {my_agent.get_score():.2f}, opp-> {opp_agent.get_score():.2f} | N_agents: {len(agents)}")
-#    it += 1
+        #warning: make sure all neighbors are aware of superagents
+        hf.update_neighbors(agents, bs)
 
-#    #save data once every n games
-#    if(it % hp.save_every == 0):
-#        print("saving ...")
-#        lw.save_data(bs, it)
+        # print(f"{it} | Game: agent-{my_idx} vs {opp_idx} | Scores: agent-> {my_agent.get_score():.2f}, opp-> {opp_agent.get_score():.2f} | N_agents: {len(agents)}")
+        it += 1
 
-lw.plot_clusterData(1000)
-# lw.plot_memoryData()
+        #save data once every n games
+        if(it % hp.save_every == 0):
+            print(f"saving! Run - {run_count} | iter: {it}")
+            lw.save_data(bs, run_count, it)
+
+if __name__ == "__main__":
+    pool = multiprocessing.Pool(os.cpu_count() - 1)
+    hp = hyperParams.HP3Act()
+    pool.map(run, range(hp.n_runs))
