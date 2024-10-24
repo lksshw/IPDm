@@ -9,9 +9,14 @@ from core.logfn import LogWriter
 import core.helperfunctions as hf
 import core.hyperParams as hyperParams
 
-rng = np.random.default_rng(1234)
+global_rng = np.random.default_rng(3242)
+seeds = [global_rng.integers(1000000) for i in range(hyperParams.HPTfT().n_runs)] #pre define seeds
 
 def run(run_count):
+    rng_initSeed = seeds[run_count]
+    print(rng_initSeed)
+    rng = np.random.default_rng(rng_initSeed)
+
     hp = hyperParams.HP2Act()
     board_size = hp.board_size
 
@@ -38,6 +43,11 @@ def run(run_count):
 
     agents = bs.getTurnOrder()
 
+
+    #log state visitation frequency
+    state_map = bs.tree[agents[0]].agent.policy.state_map
+    lw.init_stateVisitCounter(state_map)
+
     while (it<max_iter):
 
         #logs
@@ -54,7 +64,14 @@ def run(run_count):
             opp_idx = rng.choice(list(me.neighbors))
 
         except ValueError:
-            print("The grid is a single agent; terminating...")
+            it += 1
+
+            #save everything since this is the last time step
+            print(f"saving! Run - {run_count} | iter: {it}")
+            lw.save_data(bs, run_count, it)
+
+            #then terminate
+            print(f" singularity at game: {it} | N_agents = {len(agents)} | terminating... ")
             break
 
         opp = bs.tree[opp_idx]

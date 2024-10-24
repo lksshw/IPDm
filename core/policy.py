@@ -34,10 +34,23 @@ class Policy:
                 self.state_map[item] = row_idx
                 row_idx +=1
 
-    # populate a table of size = ((3^11-1)/(3-1)) -1
+    # populate a q table
     def _generate_qTable(self) -> None:
         n_states = len(self.state_map)
-        self.qTable = self.rng.random((n_states, self.hp.n_actions))
+        # self.qTable = self.rng.random((n_states, self.hp.n_actions))
+
+        if self.hp.policy_type == "static":
+            self.qTable = np.zeros((n_states, self.hp.n_actions))
+            for i in range(n_states):
+                act_prob = self.rng.random(self.hp.n_actions)
+                norm_prob = act_prob/sum(act_prob)
+                self.qTable[i, :] = norm_prob
+
+        elif self.hp.policy_type == "qlearning":
+            self.qTable = self.rng.random((n_states, self.hp.n_actions))
+
+        else:
+            raise Exception("unknown policy initialization method")
 
 
     def get_action(self, state:str) ->str:
@@ -80,7 +93,7 @@ class Policy:
         return p1
 
     def __del__(self):
-        del self.qTable
+        # del self.qTable
         del self.state_map
         del self.actions_list
         gc.collect()
@@ -88,16 +101,17 @@ class Policy:
 #tests
 if __name__ == "__main__":
     rng = np.random.default_rng(12345)
-    hyperParams = HP()
+    hyperParams = HP.HP3Act()
 
     p1 = Policy(rng, hyperParams)
     state_1 = "CCDMCM"
 
-    p2 = Policy(rng, hyperParams)
-    state_2 = "DCMD"
+    # p2 = Policy(rng, hyperParams)
 
-    res = (p1.qTable + p2.qTable)/2
-    print(res)
+    # state_2 = "DCMD"
+
+    # res = (p1.qTable + p2.qTable)/2
+    # print(res)
 
     # print(p1.qTable[p1.state_map[state_1]])
     # p1.pick_action(state_1)

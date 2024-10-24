@@ -10,9 +10,13 @@ from core.logfn import LogWriter
 import core.helperfunctions as hf
 import core.hyperParams as hyperParams
 
-rng = np.random.default_rng(1234)
+global_rng = np.random.default_rng(1234)
+seeds = [global_rng.integers(1000000) for i in range(hyperParams.HPTfT().n_runs)] #pre define seeds
 
 def run(run_count):
+    rng_initSeed = seeds[run_count]
+    print(rng_initSeed)
+    rng = np.random.default_rng(rng_initSeed)
     hp = hyperParams.HPTfT()
     board_size = hp.board_size
 
@@ -79,7 +83,7 @@ def run(run_count):
         #log tft data
         lw.gatherTftData(agents, bs)
 
-        # print(f"{it} | {my_idx} vs {opp_idx} | agent_scr-> {my_agent.get_score():.2f}, opp_scr-> {opp_agent.get_score():.2f} | tft_count: {len(lw.tft_agents_score[-1])} | oth_count: {len(lw.other_agents_score[-1])}")
+        print(f"{it} | N_agents: {len(agents)} | max_score: {lw.tft_agents_score[-1]}")
         it += 1
 
         #save data once every n games
@@ -88,7 +92,8 @@ def run(run_count):
             lw.save_data(bs, run_count, it)
 
 if __name__ == "__main__":
-    pool = multiprocessing.Pool(os.cpu_count() - 1)
-    hp = hyperParams.HPTfT()
-    pool.map(run, range(hp.n_runs))
+    # pool = multiprocessing.Pool(os.cpu_count() - 1)
+    # hp = hyperParams.HPTfT()
+    # pool.map(run, 1)
+    run(0)
 

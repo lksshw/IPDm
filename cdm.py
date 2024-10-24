@@ -9,9 +9,13 @@ from core.env import BoardState
 import core.helperfunctions as hf
 from core.logfn import LogWriter
 
-rng = np.random.default_rng(1234)
+global_rng = np.random.default_rng(9583)
+seeds = [global_rng.integers(1000000) for i in range(hyperParams.HPTfT().n_runs)] #pre define seeds
 
 def run(run_count):
+    rng_initSeed = seeds[run_count]
+    rng = np.random.default_rng(rng_initSeed)
+
     hp = hyperParams.HP3Act()
     board_size = hp.board_size
 
@@ -39,10 +43,15 @@ def run(run_count):
     #get initial turn order
     agents = bs.getTurnOrder()
 
+    #log state visitation frequency
+    state_map = bs.tree[agents[0]].agent.policy.state_map
+    lw.init_stateVisitCounter(state_map)
+
     while (it<max_iter):
 
         #logs
         lw.gather_data(agents, bs, it)
+        lw.gatherTftData(agents, bs)
 
         # pick an agent at random
         my_idx = rng.choice(agents)
@@ -55,18 +64,27 @@ def run(run_count):
             opp_idx = rng.choice(list(me.neighbors))
 
         except ValueError:
-            print("The grid is a single agent; terminating...")
+            it += 1
+
+            #save everything since this is the last time step
+            print(f"saving! Run - {run_count} | iter: {it}")
+            lw.save_data(bs, run_count, it)
+
+            #then terminate
+            print(f" singularity at game: {it} | N_agents = {len(agents)} | terminating... ")
             break
 
         opp = bs.tree[opp_idx]
         opp_agent = opp.agent
 
-       # in case of split, store subagent indexes
+        # in case of split, store subagent indexes
         deletedAgent_info = {}
 
         #gets actions from states, updates memories, scores, and policies
         #these agents are updated in-place in the bs
-        hf.fight(my_agent, opp_agent, hp)
+        my_state, opp_state = hf.fight(my_agent, opp_agent, hp)
+
+        lw.update_visitCount(my_state, opp_state)
 
         #check to mutate my policy
         if (bs.rng.random() <=hp.policy_mutation_rate):
@@ -75,13 +93,13 @@ def run(run_count):
 
         #otherwise, merge/split
         if (my_agent.memory[-1] == "M" and opp_agent.memory[-1] == "M"):
-            print(f"Merge between: agent-{my_idx}, opp-{opp_idx}")
+            # print(f"Merge between: agent-{my_idx}, opp-{opp_idx}")
             hf.merge(me, opp, bs)
 
         elif (hf.is_superAgent(me) and me.agent.get_score() <hp.threshold):
-            print(f"Splitting... agent-{my_idx}")
+            # print(f"Splitting... agent-{my_idx}")
             deletedAgent_info = hf.split(me, bs)
-            print(deletedAgent_info)
+            # print(deletedAgent_info)
 
         #update turnOrder
         agents = bs.getTurnOrder()

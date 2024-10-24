@@ -77,11 +77,26 @@ def fight(me, opp, hp):
 
     #get next state (q-learning) and update my policy
     my_newState = getState_from(me.memory, opp.memory, smallest_memLen)
-    me.policy.update_qTable(my_state, my_action, my_score, my_newState)
+    #update only if qlearning policy
+    if hp.policy_type == "qlearning":
+        me.policy.update_qTable(my_state, my_action, my_score, my_newState)
+    elif hp.policy_type == "static":
+        pass
+    else:
+        raise Exception("unknown policy initialization method")
 
     #similarly to the opponent
     opp_newState = getState_from(opp.memory, me.memory, smallest_memLen)
-    opp.policy.update_qTable(opp_state, opp_action, opp_score, opp_newState)
+    #update only if qlearning
+    if hp.policy_type == "qlearning":
+        opp.policy.update_qTable(opp_state, opp_action, opp_score, opp_newState)
+    elif hp.policy_type == "static":
+        pass
+    else:
+        raise Exception("unknown policy initialization method")
+
+    return my_state, opp_state
+
 
 def get_payoffScore(my_act, opp_act, hyperParams):
     hp = hyperParams
@@ -96,14 +111,22 @@ def get_payoffScore(my_act, opp_act, hyperParams):
 def merge(me, someone, bs):
 
     #create agent
-    new_memLen = np.max([me.agent.memory_length, someone.agent.memory_length])
+    #set memory length to be that of the best agent
+    new_memLen = [me.agent.memory_length, someone.agent.memory_length][np.argmax([me.agent.get_score(), someone.agent.get_score()])]
 
     #all new agents carry unique id's
     newAgent_id = bs.uuid_pointer
     new_node = env.Tree(agent = Agent(bs.rng, bs.hp, newAgent_id, new_memLen), parents = set([me.agent.agent_id, someone.agent.agent_id]), children = set([]), neighbors = get_superAgentNeighbors(me.neighbors, someone.neighbors, me.agent.agent_id, someone.agent.agent_id))
 
     #reset memory
-    new_node.agent.memory = ""
+    # new_node.agent.memory = ""
+
+    #set memory to that of the best agent
+    new_node.agent.memory = [me.agent.memory, someone.agent.memory][np.argmax([me.agent.get_score(), someone.agent.get_score()])]
+    new_node.agent.memory = new_node.agent.memory[-new_memLen:]
+
+    #set score to be that of players' avg
+    new_node.agent.avg_score = (me.agent.get_score() + someone.agent.get_score())/2.0
 
     #set the policy to be that of the agent with the best score
     new_node.agent.policy = [me.agent.policy.copy(), someone.agent.policy.copy()][np.argmax([me.agent.get_score(), someone.agent.get_score()])]

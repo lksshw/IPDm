@@ -19,6 +19,15 @@ class Agent:
 
         self.policy = Policy(self.rng, self.hp)
 
+        #if self.hp.mode == "fixed":
+        #    #populate with random actions of size mem_len
+        #    actions = ['C', 'D', 'M']
+        #    actions_toUse = actions[:self.hp.n_actions]
+        #    acts = list(self.rng.choice(actions_toUse, size=self.memory_length))
+        #    prev_mem = ''.join(acts)
+        #    self.add_memory(prev_mem)
+
+
     #use during merge/split/mutation
     def set_memory_length(self, m_len:int) -> None:
         self.memory_length = m_len
@@ -39,10 +48,10 @@ class Agent:
         self.avg_score += score #make sure you divide by len(memory) when you use it later
 
     def get_score(self) ->None:
-        # if(len(self.memory)):
-        #     return self.avg_score/len(self.memory)
-        # else:
-        return self.avg_score
+        if(len(self.memory)):
+            return self.avg_score/len(self.memory)
+        else:
+            return self.avg_score
 
     #destructor
     def __del__(self):
