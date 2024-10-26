@@ -10,10 +10,10 @@ class HP:
         self.max_iter = int(100e3)
 
         #threshold score of superAgent below which it splits
-        self.threshold = 3.0
+        # self.threshold = 3.0
 
         #mutate policy to that of a better neighbor
-        self.policy_mutation_rate = 0.5
+        self.policy_mutation_rate = 0.7
 
         #save frequency
         self.save_every = self.max_iter//10
@@ -25,21 +25,24 @@ class HP:
                 "CC": 8.0,
                 "CD": 0.0,
                 "CM": 8.0,
+                "CS": 0.0,
                 "DD": 5.0,
                 "DC": 10.0,
                 "DM": 10.0,
+                "DS": 0.0,
                 "MM": 0.0,
                 "MC": 8.0,
                 "MD": 0.0,
+                "MS": 0.0
                 } #format: me,you
 
         #qlearning or static
         self.policy_type = "qlearning"
 
-class HP3Act(HP):
+class HP4Act(HP):
     def __init__(self):
         super().__init__()
-        self.n_actions = 3
+        self.n_actions = 4
         self.mode = "fixed"
         self.max_agentMemory = 4
         self.max_stateLen = self.max_agentMemory*2 #state will a combination of my memory+opponent memory

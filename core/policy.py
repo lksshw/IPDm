@@ -3,20 +3,21 @@
 import gc
 import numpy as np
 from itertools import product
+# import hyperParams as HP
 
 class Policy:
 
     # constructor (initialize empty qTable)
     def __init__(self, rng, hp) -> None:
         assert hp.max_agentMemory <= 7, "maximum memory length must be <=7"
-        assert hp.n_actions == 3 or hp.n_actions ==2,  "policy is designed for 2 or 3 actions"
+        assert hp.n_actions == 4 or hp.n_actions ==2,  "policy is designed for 2 or 3 actions"
 
         self.rng = rng
         #hyperparams
         self.hp = hp
 
         #format: rows = states(str), columns = actions(float32) (order: C, D, M)
-        self.actions_list = ['C', 'D', 'M']
+        self.actions_list = ['C', 'D', 'M', 'S']
         self.actions_list = self.actions_list[:hp.n_actions]
         self._generate_qTableMap()
         self._generate_qTable()
@@ -104,7 +105,9 @@ if __name__ == "__main__":
     hyperParams = HP.HP3Act()
 
     p1 = Policy(rng, hyperParams)
-    state_1 = "CCDMCM"
+    state_1 = "MSSSSC"
+
+    print(p1.get_action(""))
 
     # p2 = Policy(rng, hyperParams)
 

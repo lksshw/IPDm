@@ -16,7 +16,7 @@ def run(run_count):
     rng_initSeed = seeds[run_count]
     rng = np.random.default_rng(rng_initSeed)
 
-    hp = hyperParams.HP3Act()
+    hp = hyperParams.HP4Act()
     board_size = hp.board_size
 
     #logger
@@ -96,10 +96,17 @@ def run(run_count):
             # print(f"Merge between: agent-{my_idx}, opp-{opp_idx}")
             hf.merge(me, opp, bs)
 
-        elif (hf.is_superAgent(me) and me.agent.get_score() <hp.threshold):
-            # print(f"Splitting... agent-{my_idx}")
-            deletedAgent_info = hf.split(me, bs)
-            # print(deletedAgent_info)
+        # if you don't merge, then try to split
+        else:
+            # 1. check if I'm a superagent and I've chosen split;
+            if (hf.is_superAgent(me) and my_agent.memory[-1] == "S"):
+                # print(f"Splitting... agent-{my_idx}")
+                deletedAgent_info = hf.split(me, bs)
+                # print(deletedAgent_info)
+
+            #check if my opponent is a superagent and he wants to split
+            if (hf.is_superAgent(opp) and opp_agent.memory[-1] == "S"):
+                deletedAgent_info = hf.split(opp, bs)
 
         #update turnOrder
         agents = bs.getTurnOrder()
@@ -117,5 +124,5 @@ def run(run_count):
 
 if __name__ == "__main__":
     pool = multiprocessing.Pool(os.cpu_count() - 1)
-    hp = hyperParams.HP3Act()
+    hp = hyperParams.HP4Act()
     pool.map(run, range(hp.n_runs))
