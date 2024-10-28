@@ -72,6 +72,9 @@ class LogWriter:
 
         self.visit_count = {}
 
+        # record agent data (idx, act_played(t), fitness(t))
+        self.agent_data = {}
+
     def init_stateVisitCounter(self, state_map):
         # state visitation frequency
         self.visit_count = {state: 0.0 for state, v in state_map.items()}
@@ -204,9 +207,7 @@ class LogWriter:
         for ag_idx in agent_list:
             memLen = bs.tree[ag_idx].agent.memory_length
             mem_sizes.append(memLen)
-        unique_sizes = set(mem_sizes)
-        self.memorySizeData[curr_iter] = np.mean(
-            list(unique_sizes))  # avg_mem size at each ts
+        self.memorySizeData[curr_iter] = np.mean(mem_sizes)
 
     def record_lastMem(self, agent_list, bs):
         self.lastMemScores = {k: [] for k in range(self.hp.max_agentMemory+1)}
@@ -236,6 +237,15 @@ class LogWriter:
 
         self.best_idv_matrix[curr_iter] = self.create_grid_viz(bs)
 
+    def gather_agent_data(self, agent_list, bs, curr_iter):
+        for ag_idx in agent_list:
+            size_cnt = len(hf.get_root(ag_idx, bs))
+            lst_act = bs.tree[ag_idx].agent.memory[-1]
+            ftn = bs.tree[ag_idx].agent.get_score()
+
+            self.agent_data[ag_idx] = {curr_iter: {"size": size_cnt, "act": lst_act, "ftn": ftn}}
+
+
     def gather_data(self, agent_list, bs, curr_iter):
         self.record_clusterInfo(agent_list, bs, curr_iter)
         self.record_cooperability(agent_list, bs, curr_iter)
@@ -259,6 +269,9 @@ class LogWriter:
 
         # size-fitness corr
         self.record_fitness_size_correlation(agent_list, bs, curr_iter)
+
+        # agent data
+        self.gather_agent_data(agent_list, bs, curr_iter)
 
     def gather_deviantData(self, agent_list, bs, curr_iter, ag_idx):
         target_agentRecord = 0.0
@@ -379,6 +392,10 @@ class LogWriter:
         self.save_file(os.path.join(self.checkpoint_path,
                        f"size_score_corr-run{run_num}.pkl"), self.corr_record)
 
+        # save agent data
+        self.save_file(os.path.join(self.checkpoint_path,
+                       f"agent_data-run{run_num}.pkl"), self.agent_data)
+
     def load_checkpoint(self, run_num):
         # meta_data
         try:
@@ -446,6 +463,8 @@ class LogWriter:
 
         self.corr_record = self.load_file(os.path.join(
             self.checkpoint_path, f"size_score_corr-run{run_num}.pkl"))
+
+        self.agent_data = self.load_file(os.path.join(self.checkpoint_path, f"agent_data-run{run_num}.pkl"))
 
         return iter_num, bs
 

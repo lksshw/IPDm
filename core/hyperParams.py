@@ -19,7 +19,7 @@ class HP:
         self.save_every = self.max_iter//10
 
         # n_runs
-        self.n_runs = 1
+        self.n_runs = 5
 
         self.payTable = {
             "CC": 8.0,
@@ -49,7 +49,7 @@ class HP4Act(HP):
         super().__init__()
         self.n_actions = 4
         self.mode = "range_memory"
-        self.max_agentMemory = 4
+        self.max_agentMemory = 5
         # state will a combination of my memory+opponent memory
         self.max_stateLen = self.max_agentMemory*2
 

@@ -49,7 +49,7 @@ class Agent:
         return self.policy.get_action(state)
 
     def set_score(self, score:float) ->None:
-        self.avg_score += score #make sure you divide by len(memory) when you use it later
+        self.avg_score += score #make sure you divide by acts_played when you use it later
 
     def get_score(self) ->None:
         if(self.acts_played):
