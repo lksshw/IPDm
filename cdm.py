@@ -2,6 +2,7 @@
 
 import os
 import gc
+import argparse
 import numpy as np
 import multiprocessing
 import core.hyperParams as hyperParams
@@ -123,6 +124,9 @@ def run(run_count):
             lw.save_data(bs, run_count, it)
 
 if __name__ == "__main__":
-    pool = multiprocessing.Pool(os.cpu_count() - 1)
+
     hp = hyperParams.HP4Act()
+    print(f"[EXP]: cdm.py \nmode: {hp.mode}\nmax_mem: {hp.max_agentMemory}\nn_iter: {hp.max_iter}\nn_runs: {hp.n_runs}")
+
+    pool = multiprocessing.Pool(os.cpu_count() - 1)
     pool.map(run, range(hp.n_runs))
