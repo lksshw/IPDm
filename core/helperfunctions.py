@@ -119,13 +119,13 @@ def merge(me, someone, bs):
     new_node = env.Tree(agent = Agent(bs.rng, bs.hp, newAgent_id, new_memLen), parents = set([me.agent.agent_id, someone.agent.agent_id]), children = set([]), neighbors = get_superAgentNeighbors(me.neighbors, someone.neighbors, me.agent.agent_id, someone.agent.agent_id))
 
     #reset memory
-    # new_node.agent.memory = ""
+    #new_node.agent.memory = ""
 
     #set memory to that of the best agent
     new_node.agent.memory = [me.agent.memory, someone.agent.memory][np.argmax([me.agent.get_score(), someone.agent.get_score()])]
-    new_node.agent.memory = new_node.agent.memory[-new_memLen:]
+    #new_node.agent.memory = new_node.agent.memory[-new_memLen:]
 
-    #set score to be that of players' avg
+    #set score to be that of the players' avg.
     new_node.agent.avg_score = (me.agent.get_score() + someone.agent.get_score())/2.0
 
     #set the policy to be that of the agent with the best score
@@ -160,7 +160,9 @@ def split(me, bs):
 
         parent.agent.policy = me.agent.policy.copy()
         parent.agent.memory = me.agent.memory
+        parent.agent.memory_length = me.agent.memory_length
         parent.agent.avg_score = me.agent.get_score()
+        parent.agent.acts_played = 0
         parent.children = set([])
 
     #delete superagent
