@@ -17,6 +17,9 @@ class Agent:
         #current memory
         self.memory = ""
 
+        #n_actions played so far
+        self.acts_played = 0
+
         self.policy = Policy(self.rng, self.hp)
 
         #if self.hp.mode == "fixed":
@@ -36,6 +39,7 @@ class Agent:
     def add_memory(self, mem:str) ->None:
         #most recent -> rightmost
         self.memory += mem
+        self.acts_played += 1
 
     def set_policy(self, new_policy:Policy) -> None:
         self.policy = new_policy
@@ -48,8 +52,8 @@ class Agent:
         self.avg_score += score #make sure you divide by len(memory) when you use it later
 
     def get_score(self) ->None:
-        if(len(self.memory)):
-            return self.avg_score/len(self.memory)
+        if(self.acts_played):
+            return self.avg_score/self.acts_played
         else:
             return self.avg_score
 
