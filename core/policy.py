@@ -102,12 +102,15 @@ class Policy:
 #tests
 if __name__ == "__main__":
     rng = np.random.default_rng(12345)
-    hyperParams = HP.HP3Act()
+    hp = HP.HP4Act()
 
+    hp.max_agentMemory = 3
+    hp.mode = "fixed"
     p1 = Policy(rng, hyperParams)
-    state_1 = "MSSSSC"
+    print(p1.qTable.shape)
+    # state_1 = "MSSSSC"
 
-    print(p1.get_action(""))
+    # print(p1.get_action(""))
 
     # p2 = Policy(rng, hyperParams)
 

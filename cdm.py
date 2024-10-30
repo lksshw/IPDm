@@ -10,14 +10,10 @@ from core.env import BoardState
 import core.helperfunctions as hf
 from core.logfn import LogWriter
 
-global_rng = np.random.default_rng(9583)
-seeds = [global_rng.integers(1000000) for i in range(hyperParams.HPTfT().n_runs)] #pre define seeds
+def run(run_count, hp, rng_initSeed):
 
-def run(run_count):
-    rng_initSeed = seeds[run_count]
     rng = np.random.default_rng(rng_initSeed)
 
-    hp = hyperParams.HP4Act()
     board_size = hp.board_size
 
     #logger
@@ -93,21 +89,49 @@ def run(run_count):
                 my_agent.policy = hf.get_best_neighborPolicy(me, bs)
 
         #otherwise, merge/split
-        if (my_agent.memory[-1] == "M" and opp_agent.memory[-1] == "M"):
-            # print(f"Merge between: agent-{my_idx}, opp-{opp_idx}")
-            hf.merge(me, opp, bs)
 
-        # if you don't merge, then try to split
+        #check for merge or split by randomizing their selection
+        op_choose = rng.choice(['op_m', 'op_s'])
+
+        if op_choose == 'op_m':
+            #if op code is merge, try merge first, then split
+            if (my_agent.memory[-1] == "M" or opp_agent.memory[-1] == "M"):
+                # print(f"Merge between: agent-{my_idx}, opp-{opp_idx}")
+                hf.merge(me, opp, bs)
+
+            # if you don't merge, then try to split
+            else:
+                # 1. check if I'm a superagent and I've chosen split;
+                if (hf.is_superAgent(me) and my_agent.memory[-1] == "S"):
+                    # print(f"Splitting... agent-{my_idx}")
+                    deletedAgent_info = hf.split(me, bs)
+                    # print(deletedAgent_info)
+
+                #check if my opponent is a superagent and he wants to split
+                if (hf.is_superAgent(opp) and opp_agent.memory[-1] == "S"):
+                    deletedAgent_info = hf.split(opp, bs)
+
+        elif op_choose == "op_s":
+            #if op code is split; then try splitting first
+            if (my_agent.memory[-1] == 'S' or opp_agent.memory[-1] == 'S'):
+
+                # 1. check if I'm a superagent and I've chosen split;
+                if (hf.is_superAgent(me) and my_agent.memory[-1] == "S"):
+                    # print(f"Splitting... agent-{my_idx}")
+                    deletedAgent_info = hf.split(me, bs)
+                    # print(deletedAgent_info)
+
+                #check if my opponent is a superagent and he wants to split
+                if (hf.is_superAgent(opp) and opp_agent.memory[-1] == "S"):
+                        deletedAgent_info = hf.split(opp, bs)
+
+            #when neither wants to split, check to merge
+            elif (my_agent.memory[-1] == "M" or opp_agent.memory[-1] == "M"):
+                # print(f"Merge between: agent-{my_idx}, opp-{opp_idx}")
+                hf.merge(me, opp, bs)
+
         else:
-            # 1. check if I'm a superagent and I've chosen split;
-            if (hf.is_superAgent(me) and my_agent.memory[-1] == "S"):
-                # print(f"Splitting... agent-{my_idx}")
-                deletedAgent_info = hf.split(me, bs)
-                # print(deletedAgent_info)
-
-            #check if my opponent is a superagent and he wants to split
-            if (hf.is_superAgent(opp) and opp_agent.memory[-1] == "S"):
-                deletedAgent_info = hf.split(opp, bs)
+            raise Exception(f"unknown op code: {op_choose}")
 
         #update turnOrder
         agents = bs.getTurnOrder()
@@ -115,7 +139,7 @@ def run(run_count):
         #warning: make sure all neighbors are aware of superagents
         hf.update_neighbors(agents, bs)
 
-        # print(f"{it} | Game: agent-{my_idx} vs {opp_idx} | Scores: agent-> {my_agent.get_score():.2f}, opp-> {opp_agent.get_score():.2f} | N_agents: {len(agents)}")
+        print(f"{it} | Game: agent-{my_idx} vs {opp_idx} | Scores: agent-> {my_agent.get_score():.2f}, opp-> {opp_agent.get_score():.2f} | N_agents: {len(agents)}")
         it += 1
 
         #save data once every n games
@@ -126,7 +150,20 @@ def run(run_count):
 if __name__ == "__main__":
 
     hp = hyperParams.HP4Act()
+    global_rng = np.random.default_rng(9583)
+
+    seeds = [global_rng.integers(1000000) for i in range(hp.n_runs)] #pre define seeds
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--mode', type=str)
+    parser.add_argument('-l', '--mem_len', type=int)
+    args = parser.parse_args()
+
+    hp.mode = args.mode
+    hp.max_agentMemory = args.mem_len
+    hp.max_stateLen = hp.max_agentMemory*2
+
     print(f"[EXP]: cdm.py \nmode: {hp.mode}\nmax_mem: {hp.max_agentMemory}\nn_iter: {hp.max_iter}\nn_runs: {hp.n_runs}")
 
-    pool = multiprocessing.Pool(os.cpu_count() - 1)
-    pool.map(run, range(hp.n_runs))
+    pool = multiprocessing.Pool(os.cpu_count() - 4)
+    pool.starmap(run, [(i, hp, seeds[i]) for i in range(hp.n_runs)])

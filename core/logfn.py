@@ -2,6 +2,7 @@
 
 import os
 import pickle
+from scipy import stats
 import scipy
 import numpy as np
 from datetime import datetime
@@ -115,20 +116,20 @@ class LogWriter:
     def record_fitness_size_correlation(self, agent_list, bs, curr_iter):
         sizes = []
         scores = []
-        for ag_idx in agent_list:
-            me = bs.tree[ag_idx]
-            cnt = len(hf.get_root(ag_idx, bs))
-            payoff = me.agent.get_score()
-            sizes.append(cnt)
-            scores.append(payoff)
+        # for ag_idx in agent_list:
+        #     me = bs.tree[ag_idx]
+        #     cnt = len(hf.get_root(ag_idx, bs))
+        #     payoff = me.agent.get_score()
+        #     sizes.append(cnt)
+        #     scores.append(payoff)
 
-        # correlation between the 1st array(0) and the second(1)
-        self.corr_record[curr_iter] = np.corrcoef(sizes, scores)[0][1]
-        val = scipy.stats.pearsonr(sizes, scores)
-        if (np.isnan(val[0])):
-            pass
-        else:
-            print(val)
+        # # correlation between the 1st array(0) and the second(1)
+        # self.corr_record[curr_iter] = np.corrcoef(sizes, scores)[0][1]
+        # val = stats.pearsonr(sizes, scores)
+        # if (np.isnan(val[0])):
+        #     pass
+        # else:
+        #     print(val)
 
     def record_cooperability(self, agent_list, bs, curr_iter):
         uCoop = 0  # unicellular cooperability
@@ -240,7 +241,10 @@ class LogWriter:
     def gather_agent_data(self, agent_list, bs, curr_iter):
         for ag_idx in agent_list:
             size_cnt = len(hf.get_root(ag_idx, bs))
-            lst_act = bs.tree[ag_idx].agent.memory[-1]
+            if (bs.tree[ag_idx].agent.acts_played):
+                lst_act = bs.tree[ag_idx].agent.memory[-1]
+            else:
+                lst_act = ""
             ftn = bs.tree[ag_idx].agent.get_score()
 
             self.agent_data[ag_idx] = {curr_iter: {"size": size_cnt, "act": lst_act, "ftn": ftn}}
