@@ -7,7 +7,7 @@ class HP:
         self.board_size = 20
 
         # iter max
-        self.max_iter = int(100e3)
+        self.max_iter = int(50e3)
 
         # threshold score of superAgent below which it splits
         # self.threshold = 3.0
@@ -19,7 +19,7 @@ class HP:
         self.save_every = self.max_iter//10
 
         # n_runs
-        self.n_runs = 5
+        self.n_runs = 1
 
         self.payTable = {
             "CC": 8.0,
@@ -48,8 +48,8 @@ class HP4Act(HP):
     def __init__(self):
         super().__init__()
         self.n_actions = 4
-        self.mode = "range_memory"
-        self.max_agentMemory = 5
+        self.mode = "fixed"
+        self.max_agentMemory = 4
         # state will a combination of my memory+opponent memory
         self.max_stateLen = self.max_agentMemory*2
 
@@ -59,7 +59,7 @@ class HP2Act(HP):
         super().__init__()
         self.n_actions = 2
         self.mode = "range_memory"
-        self.max_agentMemory = 5
+        self.max_agentMemory = 4
         # state will a combination of my memory+opponent memory
         self.max_stateLen = self.max_agentMemory*2
 

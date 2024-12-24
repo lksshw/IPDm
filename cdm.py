@@ -82,6 +82,7 @@ def run(run_count, hp, rng_initSeed):
         my_state, opp_state = hf.fight(my_agent, opp_agent, hp)
 
         lw.update_visitCount(my_state, opp_state)
+        lw.record_single_gameplay(my_idx, opp_idx, bs, it) #record the act and memory of agents playing a single round
 
         #check to mutate my policy
         if (bs.rng.random() <=hp.policy_mutation_rate):

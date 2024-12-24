@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 import os
-import pickle
-from scipy import stats
 import scipy
+import pickle
+import itertools
 import numpy as np
+from scipy import stats
 from datetime import datetime
 import matplotlib.pyplot as plt
 import core.helperfunctions as hf
@@ -71,10 +72,21 @@ class LogWriter:
         self.best_idv_matrix = {k: np.zeros(
             (self.hp.board_size, self.hp.board_size)) for k in range(self.hp.max_iter)}
 
+        # best idv matrix (fitness based)
+        self.best_idv_matrix_fn = {k: np.zeros(
+            (self.hp.board_size, self.hp.board_size)) for k in range(self.hp.max_iter)}
+
+        self.best_idv_matrix_strat = {k: np.zeros(
+            (self.hp.board_size, self.hp.board_size)) for k in range(self.hp.max_iter)}
+
         self.visit_count = {}
 
         # record agent data (idx, act_played(t), fitness(t))
         self.agent_data = {}
+
+        #strat map
+        self.strat_to_index_map = {}
+        self.strat_count = 0
 
     def init_stateVisitCounter(self, state_map):
         # state visitation frequency
@@ -217,15 +229,32 @@ class LogWriter:
             score = bs.tree[ag_idx].agent.get_score()
             self.lastMemScores[memLen].append(score)
 
-    def create_grid_viz(self, bs):
+    def create_grid_viz(self, bs, flag):
         stained_grid = np.zeros((self.hp.board_size, self.hp.board_size))
 
         for i in range(self.hp.board_size**2):
             leaf_id = hf.get_leaf(i, bs)  # get supergroup agent
             leaf_ag_size = len(hf.get_root(leaf_id, bs))  # get its size
             row, col = bs._getBoardPos(i)
+
+            #get fitness
+            ftn_idv = bs.tree[leaf_id].agent.get_score()
+            #get strat
+            idv_strat = bs.tree[leaf_id].agent.memory[-3:]
+
             # stain row,col with its tissue size
-            stained_grid[row][col] = leaf_ag_size
+            if flag == 'fn':
+                stained_grid[row][col] = ftn_idv
+            elif flag == 'sz':
+                stained_grid[row][col] = leaf_ag_size
+            elif flag == 'strat':
+                try:
+                    stained_grid[row][col] = self.strat_to_index_map[idv_strat]
+                except KeyError:
+                    self.strat_to_index_map[idv_strat] = self.strat_count
+                    stained_grid[row][col] = self.strat_to_index_map[idv_strat]
+                    self.strat_count += 1
+
         return stained_grid
 
     def store_grid(self, agent_list, bs, curr_iter):
@@ -236,19 +265,38 @@ class LogWriter:
         best_idx = np.argmax(ag_scores)
         best_ag_idx = agent_list[best_idx]
 
-        self.best_idv_matrix[curr_iter] = self.create_grid_viz(bs)
+        self.best_idv_matrix[curr_iter] = self.create_grid_viz(bs, flag = 'sz')
 
-    def gather_agent_data(self, agent_list, bs, curr_iter):
-        for ag_idx in agent_list:
-            size_cnt = len(hf.get_root(ag_idx, bs))
-            if (bs.tree[ag_idx].agent.acts_played):
-                lst_act = bs.tree[ag_idx].agent.memory[-1]
-            else:
-                lst_act = ""
-            ftn = bs.tree[ag_idx].agent.get_score()
+        self.best_idv_matrix_fn[curr_iter] = self.create_grid_viz(bs, flag='fn')
 
-            self.agent_data[ag_idx] = {curr_iter: {"size": size_cnt, "act": lst_act, "ftn": ftn}}
+        self.best_idv_matrix_strat[curr_iter] = self.create_grid_viz(bs, flag='strat')
 
+    #def gather_agent_data(self, agent_list, bs, curr_iter):
+    #    for ag_idx in agent_list:
+    #        if ag_idx not in self.agent_data.keys():
+    #            #then make sure you create a sub-dict entry of size max_iter
+    #            self.agent_data[ag_idx] = {ky: {} for ky in range(self.hp.max_iter)}
+
+    #        size_cnt = len(hf.get_root(ag_idx, bs))
+    #        if (bs.tree[ag_idx].agent.acts_played):
+    #            lst_act = bs.tree[ag_idx].agent.memory[-1]
+    #        else:
+    #            lst_act = ""
+    #        ftn = bs.tree[ag_idx].agent.get_score()
+
+    #        self.agent_data[ag_idx][curr_iter] = {"size": size_cnt, "act": lst_act, "ftn": ftn}
+
+    def record_single_gameplay(self, ag1, ag2, bs, curr_iter):
+
+        for i in [ag1, ag2]:
+            if i not in self.agent_data.keys():
+               #then make sure you create a sub-dict entry of size max_iter
+               self.agent_data[i] = {ky: {} for ky in range(self.hp.max_iter)}
+
+            ag_cnt = len(hf.get_root(i, bs))
+            ag_fn = bs.tree[i].agent.get_score()
+            ag_act = bs.tree[i].agent.memory[-1]
+            self.agent_data[i][curr_iter] = {"sz": ag_cnt, "fn": ag_fn, "act": ag_act}
 
     def gather_data(self, agent_list, bs, curr_iter):
         self.record_clusterInfo(agent_list, bs, curr_iter)
@@ -275,7 +323,7 @@ class LogWriter:
         self.record_fitness_size_correlation(agent_list, bs, curr_iter)
 
         # agent data
-        self.gather_agent_data(agent_list, bs, curr_iter)
+        # self.gather_agent_data(agent_list, bs, curr_iter)
 
     def gather_deviantData(self, agent_list, bs, curr_iter, ag_idx):
         target_agentRecord = 0.0
@@ -392,6 +440,12 @@ class LogWriter:
         self.save_file(os.path.join(self.checkpoint_path,
                        f"bst_idv_grid-run{run_num}.pkl"), self.best_idv_matrix)
 
+        self.save_file(os.path.join(self.checkpoint_path,
+                       f"bst_idv_grid_fn-run{run_num}.pkl"), self.best_idv_matrix_fn)
+
+        self.save_file(os.path.join(self.checkpoint_path,
+                       f"bst_idv_grid_strat-run{run_num}.pkl"), self.best_idv_matrix_strat)
+
         # size-fitness correlation
         self.save_file(os.path.join(self.checkpoint_path,
                        f"size_score_corr-run{run_num}.pkl"), self.corr_record)
@@ -399,6 +453,10 @@ class LogWriter:
         # save agent data
         self.save_file(os.path.join(self.checkpoint_path,
                        f"agent_data-run{run_num}.pkl"), self.agent_data)
+
+        #save strat map
+        self.save_file(os.path.join(self.checkpoint_path,
+                       f"strat_map_{run_num}.pkl"), self.strat_to_index_map)
 
     def load_checkpoint(self, run_num):
         # meta_data
@@ -464,6 +522,12 @@ class LogWriter:
 
         self.best_idv_matrix = self.load_file(os.path.join(
             self.checkpoint_path, f"bst_idv_grid-run{run_num}.pkl"))
+
+        self.best_idv_matrix_fn = self.load_file(os.path.join(
+            self.checkpoint_path, f"bst_idv_grid_fn-run{run_num}.pkl"))
+
+        self.best_idv_matrix_strat = self.load_file(os.path.join(
+            self.checkpoint_path, f"bst_idv_grid_strat-run{run_num}.pkl"))
 
         self.corr_record = self.load_file(os.path.join(
             self.checkpoint_path, f"size_score_corr-run{run_num}.pkl"))
