@@ -88,9 +88,15 @@ class LogWriter:
         self.strat_to_index_map = {}
         self.strat_count = 0
 
-    def init_stateVisitCounter(self, state_map):
+        #cluster size map
+        self.cluster_size_map = {}
+
+        #set merge_data
+        self.merge_data = {}
+
+    def init_stateVisitCounter(self, state_map_list):
         # state visitation frequency
-        self.visit_count = {state: 0.0 for state, v in state_map.items()}
+        self.visit_count = {state: 0.0 for state in state_map_list}
 
     def update_visitCount(self, my_state, opp_state):
         if (my_state != ''):
@@ -235,6 +241,7 @@ class LogWriter:
         for i in range(self.hp.board_size**2):
             leaf_id = hf.get_leaf(i, bs)  # get supergroup agent
             leaf_ag_size = len(hf.get_root(leaf_id, bs))  # get its size
+            #get its policy
             row, col = bs._getBoardPos(i)
 
             #get fitness
@@ -297,6 +304,31 @@ class LogWriter:
             ag_fn = bs.tree[i].agent.get_score()
             ag_act = bs.tree[i].agent.memory[-1]
             self.agent_data[i][curr_iter] = {"sz": ag_cnt, "fn": ag_fn, "act": ag_act}
+
+    def record_cluster_size_map(self, agent_list, bs, curr_iter):
+        #at each iter,
+        #find all available agents on the bs,
+        #get each agent's size and map it to each of its opponents sizes
+        agent_info = {}
+        for ag_idx in agent_list:
+            ag_size = len(hf.get_root(ag_idx, bs)) #agent_size
+            me = bs.tree[ag_idx] #get agent
+            neighbor_info = {}
+            for nbr_idx in me.neighbors:
+                neighbor_info[nbr_idx] = len(hf.get_root(nbr_idx, bs))
+            agent_info[ag_idx] = {'sz': ag_size, 'nbr_sz': neighbor_info}
+
+        self.cluster_size_map[curr_iter] = agent_info
+
+    def record_merge_data(self, agent_list, bs, curr_iter):
+        # at each iter,
+        # get agent_id and its composite id's
+        ag_dat = {}
+        for ag_idx in agent_list:
+            composite_idxs = hf.get_root(ag_idx, bs)
+            ag_dat[ag_idx] = composite_idxs
+
+        self.merge_data[curr_iter] = ag_dat
 
     def gather_data(self, agent_list, bs, curr_iter):
         self.record_clusterInfo(agent_list, bs, curr_iter)
@@ -393,7 +425,7 @@ class LogWriter:
                        f"lastMem-run{run_num}.pkl"), self.lastMemScores)
 
         # save boardstate
-        # self.save_file(os.path.join(self.checkpoint_path, f"boardstate-run{run_num}.pkl"), bs)
+        self.save_file(os.path.join(self.checkpoint_path, f"boardstate-run{run_num}.pkl"), bs)
 
         # save tft data
         # self.save_file(os.path.join(self.checkpoint_path, "tft_agents.pkl"), self.tft_agents)
@@ -458,6 +490,12 @@ class LogWriter:
         self.save_file(os.path.join(self.checkpoint_path,
                        f"strat_map_{run_num}.pkl"), self.strat_to_index_map)
 
+        self.save_file(os.path.join(self.checkpoint_path,
+                       f"cluster_size_map{run_num}.pkl"), self.cluster_size_map)
+
+        self.save_file(os.path.join(self.checkpoint_path,
+                       f"merge_data{run_num}.pkl"), self.merge_data)
+
     def load_checkpoint(self, run_num):
         # meta_data
         try:
@@ -469,7 +507,7 @@ class LogWriter:
         iter_num = meta_data["iter_num"]
 
         # boardstate
-        # bs = self.load_file(os.path.join(self.checkpoint_path, f"boardstate-run{run_num}.pkl"))
+        bs = self.load_file(os.path.join(self.checkpoint_path, f"boardstate-run{run_num}.pkl"))
 
         # cluster data
         self.clusterSizeData = self.load_file(os.path.join(
@@ -533,6 +571,15 @@ class LogWriter:
             self.checkpoint_path, f"size_score_corr-run{run_num}.pkl"))
 
         self.agent_data = self.load_file(os.path.join(self.checkpoint_path, f"agent_data-run{run_num}.pkl"))
+
+        self.start_to_index_map = self.load_file(os.path.join(self.checkpoint_path,
+                       f"strat_map_{run_num}.pkl"))
+
+        self.cluster_size_map = self.load_file(os.path.join(self.checkpoint_path,
+                       f"cluster_size_map{run_num}.pkl"))
+
+        self.merge_data = self.load_file(os.path.join(self.checkpoint_path,
+                       f"merge_data{run_num}.pkl"))
 
         return iter_num, bs
 

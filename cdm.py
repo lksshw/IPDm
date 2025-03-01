@@ -9,7 +9,10 @@ import core.hyperParams as hyperParams
 from core.env import BoardState
 import core.helperfunctions as hf
 from core.logfn import LogWriter
+import time
+# from memory_profiler import profile
 
+# @profile
 def run(run_count, hp, rng_initSeed):
 
     rng = np.random.default_rng(rng_initSeed)
@@ -41,14 +44,17 @@ def run(run_count, hp, rng_initSeed):
     agents = bs.getTurnOrder()
 
     #log state visitation frequency
-    state_map = bs.tree[agents[0]].agent.policy.state_map
-    lw.init_stateVisitCounter(state_map)
+    state_map = bs.tree[agents[0]].agent.policy.qTable.keys()
+    # lw.init_stateVisitCounter(list(state_map))
 
     while (it<max_iter):
+        start = time.time()
 
         #logs
-        lw.gather_data(agents, bs, it)
-        lw.gatherTftData(agents, bs)
+        # lw.gather_data(agents, bs, it)
+        # # lw.gatherTftData(agents, bs)
+        # lw.record_cluster_size_map(agents, bs, it)
+        # lw.record_merge_data(agents, bs, it)
 
         # pick an agent at random
         my_idx = rng.choice(agents)
@@ -81,7 +87,7 @@ def run(run_count, hp, rng_initSeed):
         #these agents are updated in-place in the bs
         my_state, opp_state = hf.fight(my_agent, opp_agent, hp)
 
-        lw.update_visitCount(my_state, opp_state)
+        # lw.update_visitCount(my_state, opp_state)
         lw.record_single_gameplay(my_idx, opp_idx, bs, it) #record the act and memory of agents playing a single round
 
         #check to mutate my policy
@@ -140,13 +146,16 @@ def run(run_count, hp, rng_initSeed):
         #warning: make sure all neighbors are aware of superagents
         hf.update_neighbors(agents, bs)
 
-        print(f"{it} | Game: agent-{my_idx} vs {opp_idx} | Scores: agent-> {my_agent.get_score():.2f}, opp-> {opp_agent.get_score():.2f} | N_agents: {len(agents)}")
+        end = time.time()
+        print(f"{it} | Game: agent-{my_idx} vs {opp_idx} | Scores: agent-> {my_agent.get_score():.2f}, opp-> {opp_agent.get_score():.2f} | N_agents: {len(agents)} | te: {end-start:.2f}s")
         it += 1
 
         #save data once every n games
         if(it % hp.save_every == 0):
             print(f"saving! Run - {run_count} | iter: {it}")
             lw.save_data(bs, run_count, it)
+
+        gc.collect()
 
 if __name__ == "__main__":
 
@@ -158,13 +167,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--mode', type=str)
     parser.add_argument('-l', '--mem_len', type=int)
+    parser.add_argument('-bs', '--board_size', type=int, default=20)
     args = parser.parse_args()
 
     hp.mode = args.mode
     hp.max_agentMemory = args.mem_len
     hp.max_stateLen = hp.max_agentMemory*2
+    hp.board_size = args.board_size
 
-    print(f"[EXP]: cdm.py \nmode: {hp.mode}\nmax_mem: {hp.max_agentMemory}\nn_iter: {hp.max_iter}\nn_runs: {hp.n_runs}")
+    print(f"[EXP]: cdm.py \nmode: {hp.mode}\nmax_mem: {hp.max_agentMemory}\nn_iter: {hp.max_iter}\nn_runs: {hp.n_runs}\nBoard Size: {hp.board_size}")
 
-    pool = multiprocessing.Pool(os.cpu_count() - 4)
+    pool = multiprocessing.Pool(os.cpu_count() - 2)
     pool.starmap(run, [(i, hp, seeds[i]) for i in range(hp.n_runs)])
