@@ -19,47 +19,34 @@ class Policy:
         #format: rows = states(str), columns = actions(float32) (order: C, D, M)
         self.actions_list = ['C', 'D', 'M', 'S']
         self.actions_list = self.actions_list[:hp.n_actions]
-        self._generate_qTableMap()
         self._generate_qTable()
 
-    # maintain a map from state:str to row_index:int so you can query the qTable
-    def _generate_qTableMap(self) ->None:
+    #create qtable (json format)
+    def _generate_qTable(self) ->None:
 
-        self.state_map = {}
-        row_idx = 0
+        self.qTable = {}
         for i in np.arange(2, self.hp.max_stateLen+2, 2): #note: states  exist in pairs, odd lengthed states aren't required.
             #get combinations of length i of the actions_list
             combs = [''.join(comb) for comb in product(self.actions_list, repeat=i)]
             #create an entry for each combination
             for item in combs:
-                self.state_map[item] = row_idx
-                row_idx +=1
+                if self.hp.policy_type == "static":
+                    act_prob = np.round(self.rng.random(self.hp.n_actions), decimals = 4)
+                    norm_prob = act_prob/sum(act_prob)
+                    self.qTable[item] = {ac: norm_prob[idx_ac] for idx_ac, ac in enumerate(self.actions_list)}
 
-    # populate a q table
-    def _generate_qTable(self) -> None:
-        n_states = len(self.state_map)
-        # self.qTable = self.rng.random((n_states, self.hp.n_actions))
+                elif self.hp.policy_type == "qlearning":
+                    self.qTable[item] = {ac: np.round(self.rng.random(), decimals = 4) for idx_ac, ac in enumerate(self.actions_list)}
 
-        if self.hp.policy_type == "static":
-            self.qTable = np.zeros((n_states, self.hp.n_actions))
-            for i in range(n_states):
-                act_prob = self.rng.random(self.hp.n_actions)
-                norm_prob = act_prob/sum(act_prob)
-                self.qTable[i, :] = norm_prob
-
-        elif self.hp.policy_type == "qlearning":
-            self.qTable = self.rng.random((n_states, self.hp.n_actions))
-
-        else:
-            raise Exception("unknown policy initialization method")
-
+                else:
+                    raise Exception("unknown policy initialization method")
 
     def get_action(self, state:str) ->str:
         if (len(state) ==0 ):
             action = self.rng.choice(self.actions_list)
             return action
 
-        if state not in self.state_map:
+        if state not in list(self.qTable.keys()):
             raise Exception(f"{state} is an invalid memory state")
 
         else:
@@ -68,7 +55,7 @@ class Policy:
                 action = self.rng.choice(self.actions_list)
 
             else:
-                action_int = np.argmax(self.qTable[self.state_map[state]]) #this will be an int
+                action_int = np.argmax(list(self.qTable[state].values())) #this will be an int
                 action = self.actions_list[action_int] #query the corresponding action
 
         return action
@@ -79,14 +66,13 @@ class Policy:
             return
 
         #once the agent takes an action, receive its payoff score and update
-        if next_state not in self.state_map:
+        if next_state not in list(self.qTable.keys()):
             raise Exception(f"{next_state} is an invalid memory state")
 
-        action_int = self.actions_list.index(act)
-        q_t = self.qTable[self.state_map[curr_state], action_int]
-        max_qt1= np.max(self.qTable[self.state_map[next_state]])
+        q_t = self.qTable[curr_state][act]
+        max_qt1 = np.max(list(self.qTable[next_state].values()))
         q_tNew = (1-self.hp.alpha)*q_t + self.hp.alpha*(payoff_score + self.hp.gamma*max_qt1)
-        self.qTable[self.state_map[curr_state], action_int] = q_tNew
+        self.qTable[curr_state][act] = np.round(q_tNew, decimals = 4)
 
     def copy(self):
         p1 = Policy(self.rng, self.hp)
@@ -94,8 +80,7 @@ class Policy:
         return p1
 
     def __del__(self):
-        # del self.qTable
-        del self.state_map
+        del self.qTable
         del self.actions_list
         gc.collect()
 
@@ -104,25 +89,15 @@ if __name__ == "__main__":
     rng = np.random.default_rng(12345)
     hp = HP.HP4Act()
 
-    hp.max_agentMemory = 3
-    hp.mode = "fixed"
-    p1 = Policy(rng, hyperParams)
-    print(p1.qTable.shape)
-    # state_1 = "MSSSSC"
+    p1 = Policy(rng, hp)
+    print(p1.qTable.keys())
+    state_1 = "DM"
 
-    # print(p1.get_action(""))
+    print(p1.get_action(""))
 
-    # p2 = Policy(rng, hyperParams)
+    p1.get_action(state_1)
+    print(p1.qTable[state_1])
 
-    # state_2 = "DCMD"
-
-    # res = (p1.qTable + p2.qTable)/2
-    # print(res)
-
-    # print(p1.qTable[p1.state_map[state_1]])
-    # p1.pick_action(state_1)
-
-    # print(p1.action)
-    # p1.update_qTable(1.0, state_1)
-
+    p1.update_qTable(state_1, 'C', 0.5, 'CDMM')
+    print(p1.qTable[state_1])
 

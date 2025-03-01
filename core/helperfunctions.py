@@ -126,7 +126,7 @@ def merge(me, someone, bs):
     #new_node.agent.memory = new_node.agent.memory[-new_memLen:]
 
     #set score to be that of the players' avg.
-    new_node.agent.avg_score = (me.agent.get_score() + someone.agent.get_score())/2.0
+    new_node.agent.avg_score = np.round((me.agent.get_score() + someone.agent.get_score())/2.0, decimals = 4)
 
     #set the policy to be that of the agent with the best score
     new_node.agent.policy = [me.agent.policy.copy(), someone.agent.policy.copy()][np.argmax([me.agent.get_score(), someone.agent.get_score()])]
@@ -269,6 +269,3 @@ if __name__ == "__main__":
     # print(trim(a,b, 2))
     t = [11,2, 3][2]
     print(t)
-
-
-

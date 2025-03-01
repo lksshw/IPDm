@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
 import gc
+import os
 from core.agent import Agent
 import core.helperfunctions as hf
+import multiprocessing
 
 class Tree:
     def __init__(self, agent:Agent, parents:set, children:set, neighbors:set):
@@ -92,7 +94,7 @@ class BoardState:
         return set(neighbors)
 
     def getTurnOrder(self):
-        #todo: parallelize
+        #todo: parallelize [done]
         agents = []
         for i in range(self.board_size**2):
             leaf_agentId = hf.get_leaf(i, self)

@@ -16,10 +16,10 @@ class HP:
         self.policy_mutation_rate = 0.7
 
         # save frequency
-        self.save_every = self.max_iter//10
+        self.save_every = self.max_iter//1000
 
         # n_runs
-        self.n_runs = 1
+        self.n_runs = 5
 
         self.payTable = {
             "CC": 8.0,
