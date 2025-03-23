@@ -21,7 +21,7 @@ def run(run_count, hp, rng_initSeed):
 
     #logger
     save_path = os.getcwd()
-    save_path = os.path.join(save_path, "logs/CDMLogs")
+    save_path = os.path.join(save_path, "logs/IPDmsLogs")
     lw = LogWriter(save_path, hp)
 
     #max iteration
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     hp.max_stateLen = hp.max_agentMemory*2
     hp.board_size = args.board_size
 
-    print(f"[EXP]: cdm.py \nmode: {hp.mode}\nmax_mem: {hp.max_agentMemory}\nn_iter: {hp.max_iter}\nn_runs: {hp.n_runs}\nBoard Size: {hp.board_size}")
+    print(f"[EXP]: IPD-ms.py \nmode: {hp.mode}\nmax_mem: {hp.max_agentMemory}\nn_iter: {hp.max_iter}\nn_runs: {hp.n_runs}\nBoard Size: {hp.board_size}")
 
     pool = multiprocessing.Pool(os.cpu_count() - 2)
     pool.starmap(run, [(i, hp, seeds[i]) for i in range(hp.n_runs)])

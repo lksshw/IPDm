@@ -22,7 +22,7 @@ def run(run_count):
 
     #logger
     save_path = os.getcwd()
-    save_path = os.path.join(save_path, "logs/twoActLogs")
+    save_path = os.path.join(save_path, "logs/IPDLogs")
     lw = LogWriter(save_path, hp)
 
     #max iteration
