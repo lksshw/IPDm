@@ -147,7 +147,7 @@ def run(run_count, hp, rng_initSeed):
         hf.update_neighbors(agents, bs)
 
         end = time.time()
-        print(f"{it} | Game: agent-{my_idx} vs {opp_idx} | Scores: agent-> {my_agent.get_score():.2f}, opp-> {opp_agent.get_score():.2f} | N_agents: {len(agents)} | te: {end-start:.2f}s")
+        # print(f"{it} | Game: agent-{my_idx} vs {opp_idx} | Scores: agent-> {my_agent.get_score():.2f}, opp-> {opp_agent.get_score():.2f} | N_agents: {len(agents)} | te: {end-start:.2f}s")
         it += 1
 
         #save data once every n games
