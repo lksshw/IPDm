@@ -12,7 +12,6 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from PyIF import te_compute as te
-from scipy.interpolate import interp2d
 from matplotlib.image import AxesImage
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 
