@@ -1,20 +1,20 @@
 ### **Spatialized Iterated Prisoners Dilemma with a Varying Number of Agents**
-
 ---
 
 This repository contains code corresponding to the work known by the title of: "Extending Iterated, Spatialized Prisoners’ Dilemma to Understand Multicellularity: game theory with self-scaling players"
 
-The general idea is to run a simulation where a number of independent RL agents play Iterated prisoners dilemma (IPD) games with one another, but with a twist: instead of just the ability to _cooperate_ or _defect_, agents in-addition, have the option to _merge_ or _split_. These operators are unique in that, they allow independent agents the ability to forego their own individuality in exchange for that of another, better individual, with their 2D spatial arrangement growing/shrinking accordingly.
+The general idea is to run a simulation where a number of independent RL agents play Iterated prisoners dilemma (IPD) games with one another, but with a twist: instead of just the ability to _cooperate_ or _defect_, agents in-addition, have the option to _merge_ or _split_. These operators allow independent agents the ability to forego their own individuality in exchange for that of another, better performant individual, with their 2D spatial arrangement growing/shrinking accordingly.
 
 Here's a visualization: (the colorbar is representative of agents' size at any simulation step):
 
-![ipdms simulation](./metadata/ipdms-sim.gif)
+<img src="./metadata/ipdms-sim.gif" alt="sim" width="250"/>
 
 ### **Simulation**
 
 ---
 
 Install requisites (preferably in a virtualenv):
+
 ```bash
 pip3 install -r metadata/requirements.txt
 ```
