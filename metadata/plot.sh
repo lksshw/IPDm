@@ -32,6 +32,7 @@ if ! unzip -o data.zip; then
 fi
 
 echo "**** plotting [$(date)] ..."
+mkdir figures/
 
 echo "* figure 2"
 python3 plot_scripts/fig2.py
