@@ -51,10 +51,9 @@ def run(run_count, hp, rng_initSeed):
         start = time.time()
 
         #logs
-        # lw.gather_data(agents, bs, it)
-        # # lw.gatherTftData(agents, bs)
-        # lw.record_cluster_size_map(agents, bs, it)
-        # lw.record_merge_data(agents, bs, it)
+        lw.gather_data(agents, bs, it)
+        lw.record_cluster_size_map(agents, bs, it)
+        lw.record_merge_data(agents, bs, it)
 
         # pick an agent at random
         my_idx = rng.choice(agents)
