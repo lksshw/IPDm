@@ -25,7 +25,7 @@ if ! [ -f "${currdir}/data.zip" ]; then
 fi
 
 # unzip to ./data
-if ! unzip data.zip -y; then
+if ! unzip -o data.zip; then
 	echo "corrupted data";
 	echo "**** downloading simulation files [$(date)] ...";
 	wget "https://www.dropbox.com/scl/fi/zkwe96l96x09tyyvhgpel/data.zip?rlkey=7tepqg6ql752s7g3x2fsp69cc&st=0xsz3uz1&dl=0" -O data.zip;
