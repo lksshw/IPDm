@@ -25,7 +25,7 @@ pip3 install -r metadata/requirements.txt
 A simulation of merge based IPD (termed ipd-ms) can be run as:
 
 ```python
-python3 ipd-ms.py --mode "fixed" --mem_len 4 --bs 20
+python3 ipd-ms.py --mode "fixed" --mem_len 4 -bs 20
 ```
 
 The _--mode_ option specifies if agents are to be homogenously initialized with a constant memory capacity (mode = _fixed_) or heterogenously from a uniform random distribution (mode = _range_memory_ ) whose bounds are decided by the _--mem_len_ parameter (_--mem_len = 4_, set here).
@@ -35,7 +35,7 @@ The size of the arena in which agents play merge based IPD games is set using th
 A simulation of classic IPD (with _cooperate_ and _defect_ as possible actions) can be run as:
 
 ```python
-python3 ipd.py --mode "fixed" --mem_len 4 --bs 20
+python3 ipd.py --mode "fixed" --mem_len 4 -bs 20
 ```
 
 The file, [hyperparams.py](https://github.com/lksshw/IPDm/blob/main/core/hyperParams.py) maintains a list of invariant hyperparameters values related to the q-learning algorithm, mutation rate etc.
