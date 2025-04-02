@@ -16,7 +16,7 @@ Here's a visualization: (the colorbar is representative of agents' size at any s
 
 ---
 
-Install requisites (preferably in a virtualenv):
+In a virtualenv:
 
 ```bash
 pip3 install -r metadata/requirements.txt
