@@ -7,7 +7,7 @@ The general idea is to run a simulation where a number of independent RL agents 
 
 Here's a visualization: (the colorbar is representative of agents' size at any simulation step):
 
-<img src="./metadata/ipdms-sim.gif" alt="sim" width="100" display=block margin=auto/>
+<img src="./metadata/ipdms-sim.gif" alt="sim" display=block margin=auto width="500"/>
 
 ### **Simulation**
 
