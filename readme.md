@@ -1,4 +1,5 @@
 ### **Spatialized Iterated Prisoners Dilemma with a Varying Number of Agents**
+
 ---
 
 This repository contains code corresponding to the work known by the title of: "Extending Iterated, Spatialized Prisoners’ Dilemma to Understand Multicellularity: game theory with self-scaling players"
@@ -7,7 +8,9 @@ The general idea is to run a simulation where a number of independent RL agents 
 
 Here's a visualization: (the colorbar is representative of agents' size at any simulation step):
 
-<img src="./metadata/ipdms-sim.gif" alt="sim" display=block margin=auto width="500"/>
+<div style= "text-align:center;">
+    <img src="./metadata/ipdms-sim.gif" alt="sim" width="600"/>
+</div>
 
 ### **Simulation**
 
@@ -44,6 +47,7 @@ The file, [hyperparams.py](https://github.com/lksshw/IPDm/blob/main/core/hyperPa
 The results we report focuses on the relationship between memory size (varied by the _--mem_len_ option) and merge tendency (varied by enabling or disabling merge/split actions: by running either ipd-ms or ipd simulations)
 
 ```bash
+cd metadata
 chmod +x plot.sh
 ./plot.sh
 ```
