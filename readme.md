@@ -46,6 +46,8 @@ The file, [hyperparams.py](https://github.com/lksshw/IPDm/blob/main/core/hyperPa
 
 The results we report focuses on the relationship between memory size (varied by the _--mem_len_ option) and merge tendency (varied by enabling or disabling merge/split actions: by running either ipd-ms or ipd simulations)
 
+running [plot.sh](https://github.com/lksshw/IPDm/blob/main/metadata/plot.sh) replicates our result:
+
 ```bash
 cd metadata
 chmod +x plot.sh
