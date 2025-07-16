@@ -7,15 +7,20 @@
 </div>
 
 <br>
+
 This repository contains code corresponding to the work titled: "Extending Iterated, Spatialized Prisoners’ Dilemma to Understand Multicellularity: game theory with self-scaling players"
 
-The general idea is to run a simulation where independent RL agents play Iterated prisoners dilemma (IPD) games with one another; but with a twist: instead of their restricted ability to _cooperate_ or _defect_, agents in-addition, have the option to _merge_ or _split_. These additional operators allow agents the ability to forego their own individuality in exchange for that of another, better performant individual, with their 2D spatial arrangement growing/shrinking accordingly.
+The general idea is to run a simulation where independent RL agents play Iterated prisoners dilemma (IPD) games with one another. But with a twist: instead of their restricted ability to _cooperate_ or _defect_, agents in-addition, have the option to _merge_ or _split_. These operators allow agents the ability to forego their individuality in exchange for that of another, better performant individual, with their 2D spatial arrangement growing/shrinking accordingly.
 
 Here's a visualization: (the colorbar is representative of agents' size).
 
 <div style= "text-align:center;">
     <img src="./metadata/ipdms-sim.gif" alt="sim" width="450"/>
 </div>
+
+<br>
+
+The [interactive demo](https://lksshw.github.io/) might provide a better understanding of the matter.
 
 ### **Simulation**
 
