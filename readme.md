@@ -1,5 +1,12 @@
 ### **Spatialized Iterated Prisoners Dilemma with a Varying Number of Agents**
 
+<div align="center">
+    <a href="https://ieeexplore.ieee.org/document/10970107">Paper</a>
+    <a href="https://lksshw.github.io/">Demo</a>
+    <a href="https://www.youtube.com/watch?v=iOFHyNliS9M&ab_channel=MichaelLevin%27sAcademicContent">Talk</a>
+</div>
+
+<br>
 This repository contains code corresponding to the work titled: "Extending Iterated, Spatialized Prisoners’ Dilemma to Understand Multicellularity: game theory with self-scaling players"
 
 The general idea is to run a simulation where independent RL agents play Iterated prisoners dilemma (IPD) games with one another; but with a twist: instead of their restricted ability to _cooperate_ or _defect_, agents in-addition, have the option to _merge_ or _split_. These additional operators allow agents the ability to forego their own individuality in exchange for that of another, better performant individual, with their 2D spatial arrangement growing/shrinking accordingly.
